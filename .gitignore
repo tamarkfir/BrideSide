@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+test-output/
+design/
+deck/
+
+# לא לפרסם ב-repo ציבורי: חומרי הקורס (זכויות יוצרים), מחקר חיצוני, ותמונות אישיות
+presentaion guidelines/
+example_photos/
