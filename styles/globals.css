@@ -321,7 +321,7 @@
     page-break-after: always !important;
     break-after: page !important;
     width: 277mm !important; /* Fits within A4 landscape printable area */
-    height: 190mm !important; /* Fits within A4 landscape printable area */
+    height: 150mm !important; /* Reduced height to test overflow page splitting */
     margin: 0 auto !important;
     box-sizing: border-box !important;
   }
@@ -357,13 +357,12 @@
     margin-left: 0 !important;
   }
 
-  .absolute.inset-0.rounded-xl {
-    display: none !important; /* Temporarily hide decorations to isolate page break cause */
-  }
-
-  .print-block-layout {
+  .print-block-layout,
+  .print-block-layout > div,
+  .print-block-layout .flex-1 {
     display: block !important;
     height: auto !important;
+    overflow: visible !important;
   }
 
   .note-card {
