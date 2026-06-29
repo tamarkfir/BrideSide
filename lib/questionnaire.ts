@@ -406,7 +406,8 @@ export const QUESTIONNAIRE: QPage[] = [
   {
     key: "anything_else",
     title: "עוד משהו",
-    group: "כתיבת טקסטים",
+    group: "סיכום",
+    allowPhoto: true,
     fields: [
       {
         id: "anythingElse",

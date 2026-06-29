@@ -28,11 +28,17 @@ function readAll(): DecoLayout {
 export default function PageDecorations({
   variant,
   editable = true,
+  buttonLabel = "🌿 סדרו פרחים",
+  buttonOffset = 12,
 }: {
   variant: string;
   /** האם להציג את עורך הפרחים (כפתור/פאנל). כבים אותו בעותקי-הדפסה כדי שלא
    *  יופיעו כמה כפתורי עריכה כפולים על אותה פינה. */
   editable?: boolean;
+  /** טקסט הכפתור (אופציונלי, ברירת מחדל: "🌿 סדרו פרחים") */
+  buttonLabel?: string;
+  /** מרחק משמאל (אופציונלי, למניעת התנגשויות של כמה עורכים באותו עמוד) */
+  buttonOffset?: number;
 }) {
   const isDev = process.env.NODE_ENV === "development";
   const [mounted, setMounted] = useState(false);
@@ -43,12 +49,25 @@ export default function PageDecorations({
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
 
-  // טעינת פריסה שמורה (אם יש) לכל קבוצה — מסננים פרחים שכבר לא קיימים
-  // (פריסות ישנות ב-localStorage עלולות להצביע על קבצים שנמחקו)
+  const [availableAssets, setAvailableAssets] = useState<string[]>(BOTANICALS);
+
+  useEffect(() => {
+    if (isDev && editable) {
+      fetch("/api/assets")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.assets && data.assets.length > 0) {
+            setAvailableAssets(data.assets);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isDev, editable]);
+
+  // טעינת פריסה שמורה (אם יש) לכל קבוצה
   useEffect(() => {
     setMounted(true);
-    const valid = new Set(BOTANICALS);
-    const saved = (readAll()[variant] ?? []).filter((d) => valid.has(d.src));
+    const saved = readAll()[variant] ?? [];
     setLayout(saved.length ? saved : DEFAULT_DECOR[variant] ?? []);
     setSel(null);
   }, [variant]);
@@ -124,45 +143,36 @@ export default function PageDecorations({
         outline: edit && sel === i ? "2px dashed var(--tw-ring-color, #9B5750)" : "none",
         outlineOffset: 4,
         pointerEvents: edit ? "auto" : "none",
-        // שרכים (fern) תמיד מתחת לכל פרח אחר
-        zIndex: d.src.includes("fern") ? 1 : 2,
+        // שרכים (fern) היו פעם תמיד מתחת, אבל עכשיו ניתן לשלוט בסדר בעזרת הכפתורים
+        zIndex: 2,
       }}
     />
   );
 
   return (
     <>
-      {/* Background layer for paper ripples (unclipped, behind the notebook paper) */}
-      <div
-        className="absolute inset-0 rounded-xl"
-        style={{ pointerEvents: "none", zIndex: edit ? 40 : -10 }}
-        aria-hidden
-      >
-        {layout.map((d, i) => (d.src.includes("/textures/") ? renderItem(d, i) : null))}
-      </div>
-
-      {/* Foreground layer for botanicals (clipped to notebook boundaries, except on Landing page) */}
+      {/* Foreground layer for all decorations (clipped to notebook boundaries, except on Landing page and global background) */}
       <div
         ref={containerRef}
-        className={`absolute inset-0 rounded-xl ${variant === "Landing" ? "" : "overflow-hidden"}`}
+        className={`absolute inset-0 rounded-xl ${variant === "Landing" || variant === "רקע ספרון" ? "" : "overflow-hidden"}`}
         style={{ pointerEvents: "none", zIndex: edit ? 40 : undefined }}
         aria-hidden
       >
-        {layout.map((d, i) => (!d.src.includes("/textures/") ? renderItem(d, i) : null))}
+        {layout.map((d, i) => renderItem(d, i))}
       </div>
 
       {/* כלי-עורך — מוצגים רק בפיתוח ורק לעותק שניתן לעריכה (לא לעותקי-הדפסה),
           מחוץ לאזור החיתוך (portal ל-body) */}
       {editable && isDev && mounted &&
         createPortal(
-          <div style={{ position: "fixed", left: 12, bottom: 12, zIndex: 9999, fontFamily: "system-ui" }}>
+          <div style={{ position: "fixed", left: buttonOffset, bottom: 12, zIndex: 9999, fontFamily: "system-ui" }}>
             {!edit ? (
               <button
                 type="button"
                 onClick={() => setEdit(true)}
                 style={btn}
               >
-                🌿 סדרו פרחים
+                {buttonLabel}
               </button>
             ) : (
               <div style={panel}>
@@ -197,18 +207,52 @@ export default function PageDecorations({
                       />
                       <span style={{ width: 38, textAlign: "left" }}>{selected.rot}°</span>
                     </label>
-                    <button
-                      type="button"
-                      style={btnSm}
-                      onClick={() => {
-                        const next = layout.filter((_, j) => j !== sel);
-                        setLayout(next);
-                        save(next);
-                        setSel(null);
-                      }}
-                    >
-                      מחקי פרח נבחר
-                    </button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        type="button"
+                        style={btnSm}
+                        onClick={() => {
+                          if (sel === null || sel === 0) return;
+                          const next = [...layout];
+                          const temp = next[sel];
+                          next[sel] = next[sel - 1];
+                          next[sel - 1] = temp;
+                          setLayout(next);
+                          save(next);
+                          setSel(sel - 1);
+                        }}
+                      >
+                        העבר אחורה
+                      </button>
+                      <button
+                        type="button"
+                        style={btnSm}
+                        onClick={() => {
+                          if (sel === null || sel === layout.length - 1) return;
+                          const next = [...layout];
+                          const temp = next[sel];
+                          next[sel] = next[sel + 1];
+                          next[sel + 1] = temp;
+                          setLayout(next);
+                          save(next);
+                          setSel(sel + 1);
+                        }}
+                      >
+                        העבר קדימה
+                      </button>
+                      <button
+                        type="button"
+                        style={btnSm}
+                        onClick={() => {
+                          const next = layout.filter((_, j) => j !== sel);
+                          setLayout(next);
+                          save(next);
+                          setSel(null);
+                        }}
+                      >
+                        מחיקה
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <p style={{ fontSize: 12, color: "#666", margin: 0 }}>לחצי על פרח כדי לבחור ולערוך</p>
@@ -228,7 +272,7 @@ export default function PageDecorations({
                     }}
                   >
                     <option value="">פרח…</option>
-                    {BOTANICALS.map((s) => (
+                    {availableAssets.map((s) => (
                       <option key={s} value={s}>
                         {s.split("/").pop()?.replace(".png", "")}
                       </option>
@@ -241,17 +285,24 @@ export default function PageDecorations({
                     type="button"
                     style={btnSm}
                     onClick={async () => {
-                      const json = JSON.stringify(readAll(), null, 2);
                       try {
-                        await navigator.clipboard.writeText(json);
-                      } catch {
-                        /* ignore */
+                        const res = await fetch("/api/save-decor", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ ...DEFAULT_DECOR, ...readAll() }),
+                        });
+                        if (res.ok) {
+                          alert("הפריסה נשמרה לקוד בהצלחה! 🎉");
+                        } else {
+                          const err = await res.json();
+                          alert("שגיאה בשמירה: " + (err.error || ""));
+                        }
+                      } catch (e: any) {
+                        alert("שגיאה בשמירה: " + e.message);
                       }
-                      console.log("BRIDESIDE DECOR LAYOUT:\n" + json);
-                      alert("הפריסה הועתקה (וגם נדפסה ל-console). הדביקי אותה לקלוד.");
                     }}
                   >
-                    העתק פריסה
+                    שמירה לקוד
                   </button>
                   <button
                     type="button"

@@ -27,6 +27,7 @@ type ChatRequest = {
   messages: { role: "user" | "assistant"; content: string }[];
   maxTokens?: number;
   json?: boolean;
+  useSearch?: boolean;
 };
 
 export async function POST(req: Request) {
@@ -58,7 +59,8 @@ export async function POST(req: Request) {
       role: message.role === "assistant" ? "model" : "user",
       parts: [{ text: message.content }],
     })),
-    tools: [{ googleSearch: {} }],
+    // googleSearch and responseMimeType (json mode) cannot be used together — conflict.
+    tools: body.useSearch && !body.json ? [{ googleSearch: {} }] : undefined,
     config: {
       systemInstruction: SYSTEM_PROMPT,
       maxOutputTokens: Math.min(body.maxTokens ?? 2048, 8192),

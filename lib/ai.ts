@@ -10,14 +10,15 @@ export async function askAI(
   prompt: string,
   history: Message[] = [],
   maxTokens = 1024,
-  json = false
+  json = false,
+  useSearch = false
 ): Promise<AIResult> {
   try {
     const messages: Message[] = [...history, { role: "user", content: prompt }];
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, maxTokens, json }),
+      body: JSON.stringify({ messages, maxTokens, json, useSearch }),
     });
 
     const data = await res.json();
@@ -46,6 +47,12 @@ export async function askAIJson<T>(prompt: string, history: Message[] = [], maxT
   const result = await askAI(prompt, history, maxTokens, true);
   if (!result.ok) return null;
   return extractJson<T>(result.text);
+}
+
+/** קריאת AI עם חיפוש רשת מופעל (plain text, לא JSON). מחזירה את הטקסט הגולמי. */
+export async function askAIWithSearch(prompt: string, maxTokens = 2048): Promise<string | null> {
+  const result = await askAI(prompt, [], maxTokens, false, true);
+  return result.ok ? result.text : null;
 }
 
 /**

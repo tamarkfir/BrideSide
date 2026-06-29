@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import CeremonyBooklet from "./CeremonyBooklet";
-import { askAIJson } from "@/lib/ai";
-import { buildCeremonyPrompt, proofreadCeremonyPrompt } from "@/lib/prompts";
+import { askAIJson, askAIWithSearch, extractJson } from "@/lib/ai";
+import { buildCeremonyPrompt, buildSongResearchPrompt, proofreadCeremonyPrompt, type VerifiedSong } from "@/lib/prompts";
 import { makeSampleBooklet } from "@/lib/sampleBooklet";
 import { makeId } from "@/lib/state";
 import type { CeremonyBooklet as Booklet, CeremonySection, SessionState } from "@/lib/types";
 
-type Status = "loading" | "ready" | "error";
+type Status = "loading" | "searching" | "ready" | "error";
 
 /** מנרמל את ה-JSON מהמודל למבנה בטוח עם מזהים */
 function normalize(raw: Partial<Booklet> | null, state: SessionState): Booklet | null {
@@ -41,8 +41,15 @@ export default function CeremonyFlow({ state, onBack }: { state: SessionState; o
   }
 
   async function generate() {
+    // שלב 1: מחקר שירים עם חיפוש רשת (plain text + googleSearch)
+    setStatus("searching");
+    const songResearchText = await askAIWithSearch(buildSongResearchPrompt(state), 2048);
+    const songData = songResearchText ? extractJson<{ songs: VerifiedSong[] }>(songResearchText) : null;
+    const verifiedSongs = songData?.songs ?? [];
+
+    // שלב 2: בניית הטקס עם השירים המאומתים (JSON mode, ללא googleSearch)
     setStatus("loading");
-    const raw = await askAIJson<Partial<Booklet>>(buildCeremonyPrompt(state), [], 8192);
+    const raw = await askAIJson<Partial<Booklet>>(buildCeremonyPrompt(state, verifiedSongs), [], 8192);
     const result = normalize(raw, state);
     if (!result) {
       setStatus("error");
@@ -86,7 +93,15 @@ export default function CeremonyFlow({ state, onBack }: { state: SessionState; o
 
   return (
     <main className="no-print mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
-      {status === "loading" ? (
+      {status === "searching" ? (
+        <>
+          <div className="mb-8 h-12 w-12 animate-spin rounded-full border-2 border-brand-sage/30 border-t-brand-sage" />
+          <h1 className="mb-3 font-heading text-3xl text-brand-roseDark">מחפשת שירים מתאימים…</h1>
+          <p className="leading-relaxed text-brand-ink/70">
+            מאמתת את מילות השירים שבחרתן ומחפשת שירים שמתאימים במיוחד לכן.
+          </p>
+        </>
+      ) : status === "loading" ? (
         <>
           <div className="mb-8 h-12 w-12 animate-spin rounded-full border-2 border-brand-rose/30 border-t-brand-rose" />
           <h1 className="mb-3 font-heading text-3xl text-brand-roseDark">אורגת את הטקס שלכן…</h1>

@@ -154,6 +154,7 @@ async function main() {
     missing: string[];
     forbidden: string[];
     softHits: string[];
+    quotesWithoutAttribution: string[];
   }[] = [];
 
   for (const spec of TEST_COUPLES) {
@@ -196,14 +197,20 @@ async function main() {
     const missing = booklet ? spec.checks.include.filter((k) => !hit(k)) : spec.checks.include;
     const forbidden = booklet ? spec.checks.exclude.filter((k) => hit(k)) : [];
     const softHits = spec.checks.soft.filter((k) => lower.includes(k.toLowerCase()));
-    results.push({ spec, booklet, text, missing, forbidden, softHits });
+
+    // בדיקת אנטי-הלוצינציה: כל קטע מסוג "quote" חייב attribution
+    const quotesWithoutAttribution = booklet
+      ? booklet.sections.filter((s) => s.kind === "quote" && !s.attribution).map((s) => s.title || "(ללא כותרת)")
+      : [];
+
+    results.push({ spec, booklet, text, missing, forbidden, softHits, quotesWithoutAttribution });
   }
 
   /* ---------- דוח לכל זוג ---------- */
   console.log("\n\n══════════ דוח קורלציה ══════════");
   let hardFail = 0;
   for (const r of results) {
-    const ok = r.booklet && r.missing.length === 0 && r.forbidden.length === 0;
+    const ok = r.booklet && r.missing.length === 0 && r.forbidden.length === 0 && r.quotesWithoutAttribution.length === 0;
     if (!ok) hardFail++;
     console.log(`\n${ok ? "✓" : "✗"} ${r.spec.nameA} ו${r.spec.nameB} — ${r.spec.profile}`);
     if (!r.booklet) {
@@ -213,6 +220,7 @@ async function main() {
     console.log(`   קטעים: ${r.booklet.sections.length} · כותרת: "${r.booklet.title}"`);
     console.log(`   חובה שיופיע:  ${r.missing.length ? "חסר → " + r.missing.join(", ") : "✓ הכול נמצא"}`);
     console.log(`   אסור שיופיע:  ${r.forbidden.length ? "הופיע! → " + r.forbidden.join(", ") : "✓ נקי"}`);
+    console.log(`   ציטוטים ללא attribution: ${r.quotesWithoutAttribution.length ? "⚠ → " + r.quotesWithoutAttribution.join(", ") : "✓ כולם מצוינים"}`);
     console.log(`   אינדיקציות (רך): ${r.softHits.length ? r.softHits.join(", ") : "—"}`);
   }
 
@@ -265,6 +273,7 @@ async function main() {
       missing: r.missing,
       forbidden: r.forbidden,
       softHits: r.softHits,
+      quotesWithoutAttribution: r.quotesWithoutAttribution,
     })),
     hardFail,
     diffWarn,

@@ -24,7 +24,6 @@ export default function LandingPage() {
   const [processing, setProcessing] = useState(false);
   const [gphotosLoading, setGphotosLoading] = useState(false);
   const [gphotosError, setGphotosError] = useState<string | null>(null);
-  const [isEditingDecor, setIsEditingDecor] = useState(false);
 
   const ready = nameA.trim().length > 0 && nameB.trim().length > 0;
 
@@ -91,7 +90,7 @@ export default function LandingPage() {
   return (
     <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-x-hidden px-6 py-16 md:px-12">
       <div className="relative mx-auto w-full max-w-2xl">
-        <PageDecorations variant="Landing" />
+        <PageDecorations variant="Landing" editable={false} />
         
         <div className="animate-fade-in relative z-10 w-full space-y-8 text-center">
           <div className="space-y-3">
@@ -230,31 +229,20 @@ export default function LandingPage() {
               <Button type="submit" disabled={!ready || processing}>
                 נתחיל
               </Button>
-              {process.env.NODE_ENV === "development" && (
-                <button
-                  type="button"
-                  onClick={previewBook}
-                  disabled={processing}
-                  className="block w-full rounded-full border border-dashed border-brand-kraft/50 px-5 py-2 text-sm text-brand-sand transition hover:border-brand-rose hover:text-brand-roseDark disabled:opacity-50"
-                >
-                  📖 תצוגת ספר מלא עם התמונות (פיתוח)
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={previewBook}
+                disabled={processing}
+                className="block w-full rounded-full border border-dashed border-brand-kraft/50 px-5 py-2 text-sm text-brand-sand transition hover:border-brand-rose hover:text-brand-roseDark disabled:opacity-50"
+              >
+                📖 תצוגת ספרון לדוגמה
+              </button>
             </div>
           </form>
         </div>
       </div>
       </div>
-
-      {/* כפתור פיתוח לסידור פרחים בדף הבית */}
-      {process.env.NODE_ENV === "development" && (
-        <button
-          onClick={() => setIsEditingDecor((x) => !x)}
-          className="fixed bottom-4 left-4 z-50 rounded-full bg-white/90 px-4 py-2 text-sm shadow backdrop-blur transition hover:bg-white"
-        >
-          {isEditingDecor ? "✅ סיום עריכה" : "🌿 סדרו פרחים"}
-        </button>
-      )}
+      {/* עריכת הפרחים בדף הבית נעשית דרך הכפתור של PageDecorations עצמו (🌿 סדרו פרחים) */}
     </main>
   );
 }

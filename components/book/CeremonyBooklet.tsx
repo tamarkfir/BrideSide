@@ -113,9 +113,9 @@ export default function CeremonyBooklet({ booklet, state, onChange, onBack }: Pr
   }
 
   const section = current > 0 ? booklet.sections[current - 1] : null;
-  // השער בעיצוב קבוע; עמודי התוכן מקבלים תבנית עיצוב מתחלפת, שווה-בשווה
-  const variant = bookletVariant(current);
   const photo = section ? photos[current - 1] : undefined;
+  // השער בעיצוב קבוע; עמודי התוכן מקבלים תבנית עיצוב לפי צפיפות הטקסט
+  const variant = bookletVariant(current, section || undefined, photo);
 
   return (
     <>
@@ -141,13 +141,18 @@ export default function CeremonyBooklet({ booklet, state, onChange, onBack }: Pr
         </header>
 
         <div className="book-perspective relative">
-          <div className="book-shell">
+          {/* GLOBAL TEXTURE LAYER */}
+          <div className="absolute inset-0 -inset-x-12 -inset-y-12 sm:-inset-x-20 sm:-inset-y-20">
+             <PageDecorations variant="רקע ספרון" buttonLabel="🌿 סדרו רקע כללי" buttonOffset={160} editable={false} />
+          </div>
+
+          <div className="book-shell relative z-10">
             <div
               className={`book-page paper relative min-h-[34rem] p-6 pb-14 md:p-8 md:pb-16 ${
                 turning === "out" ? "page-turn-out" : turning === "in" ? "page-turn-in" : ""
               }`}
             >
-              <PageDecorations variant={variant} />
+              <PageDecorations variant={variant} editable={false} />
               <div className="relative z-10">
                 <div className={current === 0 ? "block" : "hidden"}>
                   <TitlePage booklet={booklet} state={state} photo={titlePhoto} onChange={onChange} />
@@ -233,32 +238,30 @@ export default function CeremonyBooklet({ booklet, state, onChange, onBack }: Pr
           טיפ: לחצו על כל טקסט בספרון כדי לערוך אותו במילים שלכן.
         </p>
 
-        {isDev && (
-          <div className="mt-3 text-center">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-dashed border-brand-sand/60 px-4 py-2 text-sm text-brand-sand transition hover:border-brand-rose hover:text-brand-roseDark">
-              ➕ הוספת תמונות לתצוגה (פיתוח)
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.length) addPreviewPhotos(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {previewPhotos.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setPreviewPhotos([])}
-                className="ml-3 text-sm text-brand-sand underline transition hover:text-brand-roseDark"
-              >
-                ניקוי ({previewPhotos.length})
-              </button>
-            )}
-          </div>
-        )}
+        <div className="mt-3 text-center">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-dashed border-brand-sand/60 px-4 py-2 text-sm text-brand-sand transition hover:border-brand-rose hover:text-brand-roseDark">
+            ➕ הוספת תמונות לספרון
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) addPreviewPhotos(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {previewPhotos.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setPreviewPhotos([])}
+              className="ml-3 text-sm text-brand-sand underline transition hover:text-brand-roseDark"
+            >
+              ניקוי ({previewPhotos.length})
+            </button>
+          )}
+        </div>
 
         {isSpotify && spotifyTrackId && (
           <div className="fixed bottom-6 left-6 z-50 animate-fade-in-up">
@@ -550,15 +553,14 @@ function BookletPrint({ booklet, photos, titlePhoto }: { booklet: Booklet; photo
           <div className="print-spread flex gap-8 p-10 bg-brand-blush items-stretch">
             {/* עמוד ימני (הראשון בצמד - RTL) */}
             <div className="flex-1 paper relative p-10 rounded-2xl border border-brand-sand/30 shadow-sm flex flex-col">
-              <PageDecorations variant={bookletVariant(i * 2)} editable={false} />
+              <PageDecorations variant={bookletVariant(i * 2, spread[0]?.type === "section" ? spread[0].section : undefined, spread[0]?.type === "section" ? spread[0].photo : undefined)} editable={false} />
               <div className="relative z-10 flex-1 flex flex-col print-block-layout">
                 {renderPageContent(spread[0])}
               </div>
               {spread[0].type !== "empty" && <p className="relative z-10 mt-8 text-center font-heading text-base text-brand-sand">— {i * 2 + 1} —</p>}
             </div>
-            {/* עמוד שמאלי */}
             <div className="flex-1 paper relative p-10 rounded-2xl border border-brand-sand/30 shadow-sm flex flex-col">
-              <PageDecorations variant={bookletVariant(i * 2 + 1)} editable={false} />
+              <PageDecorations variant={bookletVariant(i * 2 + 1, spread[1]?.type === "section" ? spread[1].section : undefined, spread[1]?.type === "section" ? spread[1].photo : undefined)} editable={false} />
               <div className="relative z-10 flex-1 flex flex-col print-block-layout">
                 {renderPageContent(spread[1])}
               </div>
