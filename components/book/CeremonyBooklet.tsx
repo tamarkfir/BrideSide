@@ -288,19 +288,21 @@ export default function CeremonyBooklet({ booklet, state, onChange, onBack }: Pr
 function TitlePage({ booklet, state, photo, onChange }: { booklet: Booklet; state: SessionState; photo?: PhotoItem; onChange: (b: Booklet) => void }) {
   return (
     <div className="flex min-h-[26rem] flex-col items-center justify-center gap-6 text-center">
-      {photo && (
-        <figure
-          className={`photo-frame treat-${photo.treatment}`}
-          style={{ transform: `rotate(${photo.rotation}deg)`, maxWidth: "10rem" }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.editedUrl ?? photo.dataUrl}
-            alt={photo.caption || "שער"}
-            className="block max-h-40 w-auto rounded-sm"
-          />
-        </figure>
-      )}
+      <div className="flex h-44 items-center justify-center">
+        {photo && (
+          <figure
+            className={`photo-frame treat-${photo.treatment}`}
+            style={{ transform: `rotate(${photo.rotation}deg)`, maxWidth: "10rem" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.editedUrl ?? photo.dataUrl}
+              alt={photo.caption || "שער"}
+              className="block max-h-40 w-auto rounded-sm"
+            />
+          </figure>
+        )}
+      </div>
       <div className="flex flex-col items-center gap-5">
         <p className="script-accent text-xl">BrideSide</p>
         <EditableText
