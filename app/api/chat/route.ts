@@ -59,13 +59,12 @@ export async function POST(req: Request) {
       role: message.role === "assistant" ? "model" : "user",
       parts: [{ text: message.content }],
     })),
-    // googleSearch and responseMimeType (json mode) cannot be used together — conflict.
-    tools: body.useSearch && !body.json ? [{ googleSearch: {} }] : undefined,
     config: {
       systemInstruction: SYSTEM_PROMPT,
       maxOutputTokens: Math.min(body.maxTokens ?? 2048, 8192),
-      // בלי "חשיבה" — תגובות מהירות יותר בשיחה חיה
       thinkingConfig: { thinkingBudget: 0 },
+      // googleSearch and responseMimeType (json mode) cannot be used together — conflict.
+      ...(body.useSearch && !body.json ? { tools: [{ googleSearch: {} }] } : {}),
       ...(body.json ? { responseMimeType: "application/json" } : {}),
     },
   };
