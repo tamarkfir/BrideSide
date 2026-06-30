@@ -137,12 +137,48 @@ export const DEFAULT_DECOR: DecoLayout = {
     }
   ],
   "ספרון · שער": [
-    { src: "/botanicals/daisy-cream.png", x: 74, y: 36, w: 101, rot: -12 },
-    { src: "/botanicals/fern-frond.png", x: 75, y: 18, w: 230, rot: 6 },
-    { src: "/botanicals/daisy-red.png", x: 52, y: 36, w: 132, rot: 0 },
-    { src: "/textures/paper-handwriting.png", x: -8, y: 45, w: 465, rot: -105 },
-    { src: "/textures/paper-cream-torn.png", x: 110, y: 99, w: 220, rot: 0 },
-    { src: "/textures/paper-blush-torn.png", x: 12, y: -2, w: 284, rot: -180 },
+    {
+      src: "/botanicals/daisy-cream.png",
+      x: 74,
+      y: 36,
+      w: 101,
+      rot: -12
+    },
+    {
+      src: "/botanicals/fern-frond.png",
+      x: 75,
+      y: 18,
+      w: 230,
+      rot: 6
+    },
+    {
+      src: "/botanicals/daisy-red.png",
+      x: 52,
+      y: 36,
+      w: 132,
+      rot: 0
+    },
+    {
+      src: "/textures/paper-handwriting.png",
+      x: -8,
+      y: 45,
+      w: 465,
+      rot: -105
+    },
+    {
+      src: "/textures/paper-cream-torn.png",
+      x: 110,
+      y: 99,
+      w: 220,
+      rot: 0
+    },
+    {
+      src: "/textures/paper-blush-torn.png",
+      x: 12,
+      y: -2,
+      w: 284,
+      rot: -180
+    }
   ],
   "ספרון · עמוס בפרחים א": [
     {
@@ -206,7 +242,15 @@ export const DEFAULT_DECOR: DecoLayout = {
   "ספרון · מעט פרחים ג": [],
   "ספרון · בלי פרחים כמעט א": [],
   "ספרון · בלי פרחים כמעט ב": [],
-  "רקע ספרון": [],
+  "רקע ספרון": [
+    {
+      src: "/textures/very-texured-page.png",
+      x: 50,
+      y: 50,
+      w: 220,
+      rot: 0
+    }
+  ],
   "סיכום": [
     {
       src: "/botanicals/sprig-pink.png",
