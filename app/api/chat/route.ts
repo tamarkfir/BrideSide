@@ -79,7 +79,12 @@ export async function POST(req: Request) {
       if (!text) {
         return NextResponse.json({ error: "empty_response" }, { status: 502 });
       }
-      return NextResponse.json({ text });
+      // אות אמיתי לחיפוש: כמה chunks הוחזרו ע"י googleSearch. המודל לבדו עלול
+      // "להמציא" excerpt + source גם כש-grounding לא ירה — לכן מחזירים את הספירה
+      // כדי שצד-הלקוח יוכל לפסול ציטוטים כשלא היה grounding אמיתי.
+      const groundingCount =
+        response.candidates?.[0]?.groundingMetadata?.groundingChunks?.length ?? 0;
+      return NextResponse.json({ text, grounded: groundingCount > 0, groundingCount });
     } catch (error) {
       lastError = error;
       const status = (error as { status?: number })?.status;

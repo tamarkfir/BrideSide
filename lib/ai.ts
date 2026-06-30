@@ -1,6 +1,8 @@
 import type { Message } from "./types";
 
-export type AIResult = { ok: true; text: string } | { ok: false; error: string };
+export type AIResult =
+  | { ok: true; text: string; grounded?: boolean }
+  | { ok: false; error: string };
 
 /**
  * קריאה למנחה דרך ה-API route.
@@ -25,7 +27,7 @@ export async function askAI(
     if (!res.ok || typeof data.text !== "string") {
       return { ok: false, error: data.error ?? "request_failed" };
     }
-    return { ok: true, text: data.text };
+    return { ok: true, text: data.text, grounded: data.grounded === true };
   } catch {
     return { ok: false, error: "network_error" };
   }
@@ -49,10 +51,17 @@ export async function askAIJson<T>(prompt: string, history: Message[] = [], maxT
   return extractJson<T>(result.text);
 }
 
-/** קריאת AI עם חיפוש רשת מופעל (plain text, לא JSON). מחזירה את הטקסט הגולמי. */
-export async function askAIWithSearch(prompt: string, maxTokens = 2048): Promise<string | null> {
+/**
+ * קריאת AI עם חיפוש רשת מופעל (plain text, לא JSON).
+ * מחזירה את הטקסט הגולמי + האם חיפוש אמיתי ירה (grounded). grounded=false פירושו
+ * שאסור לבטוח ב-excerpt-ים שהמודל החזיר (הוא עלול להמציא אותם).
+ */
+export async function askAIWithSearch(
+  prompt: string,
+  maxTokens = 2048
+): Promise<{ text: string; grounded: boolean } | null> {
   const result = await askAI(prompt, [], maxTokens, false, true);
-  return result.ok ? result.text : null;
+  return result.ok ? { text: result.text, grounded: result.grounded === true } : null;
 }
 
 /**
