@@ -62,7 +62,9 @@ export async function POST(req: Request) {
     config: {
       systemInstruction: SYSTEM_PROMPT,
       maxOutputTokens: Math.min(body.maxTokens ?? 2048, 8192),
-      thinkingConfig: { thinkingBudget: 0 },
+      // חיפוש: נותנים תקציב חשיבה כדי שהמודל באמת יזמן את כלי החיפוש על פני
+      // פרומפט כבד ויחזיר grounding אמיתי. שאר הקריאות נשארות מהירות (budget 0).
+      thinkingConfig: { thinkingBudget: body.useSearch && !body.json ? 512 : 0 },
       // googleSearch and responseMimeType (json mode) cannot be used together — conflict.
       ...(body.useSearch && !body.json ? { tools: [{ googleSearch: {} }] } : {}),
       ...(body.json ? { responseMimeType: "application/json" } : {}),
