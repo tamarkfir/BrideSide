@@ -45,21 +45,16 @@ export default function CeremonyFlow({ state, onBack }: { state: SessionState; o
     setStatus("searching");
     const research = await askAIWithSearch(buildSongResearchPrompt(state), 2048);
     const songData = research ? extractJson<{ songs: VerifiedSong[] }>(research.text) : null;
-    // רשת ביטחון דו-שלבית נגד ציטוטים מומצאים:
-    // 1. grounded=false → חיפוש לא ירה באמת; המודל עלול להמציא excerpt + source. פוסלים הכול.
-    // 2. גם כשירה — דורשים source שהוא URL אמיתי. בלעדיו → אזכור בשם בלבד.
     const grounded = research?.grounded === true;
-    // ציטוט מאומת רק אם עבר את כל הבדיקות: grounding אמיתי + source URL + excerpt.
-    // אחרת מאפסים את ה-excerpt (אין מילים) ומחליטים לפי סוג השיר:
-    const verifiedSongs = (songData?.songs ?? [])
-      .map((s) => {
-        const hasSource = typeof s.source === "string" && /^https?:\/\//.test(s.source);
-        const verified = grounded && hasSource && !!s.excerpt;
-        return verified ? s : { ...s, excerpt: null };
-      })
-      // הצעה של Gemini בלי מילים מאומתות — נמחקת לגמרי (אין טעם בהמלצה בלי ציטוט).
-      // שיר שהזוג בחרו — נשאר גם בלי מילים (אזכור בשם ובמשמעות בלבד).
-      .filter((s) => s.excerpt || !s.suggested);
+    // כל השירים נשארים בספרון תמיד (גם הצעות, גם בחירות הזוג) — בשם ובמשמעות.
+    // ה-gate חל רק על *ציטוט מילים*: רק אם החיפוש באמת ירה (grounded) + יש source URL
+    // + יש excerpt → מצטטים מילה-במילה. אחרת מאפסים את ה-excerpt בלבד (אזכור בשם),
+    // אבל השיר עצמו לא נמחק. כך אין "מסלול בריחה" שמעלים שירים/המלצות.
+    const verifiedSongs = (songData?.songs ?? []).map((s) => {
+      const hasSource = typeof s.source === "string" && /^https?:\/\//.test(s.source);
+      const verified = grounded && hasSource && !!s.excerpt;
+      return verified ? s : { ...s, excerpt: null };
+    });
 
     // שלב 2: בניית הטקס עם השירים המאומתים (JSON mode, ללא googleSearch)
     setStatus("loading");
